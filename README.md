@@ -34,32 +34,16 @@ ajt-devdash-phamquanganh/
 
 ---
 
-## 🚀 Features & Grading Rubric Checklist
+## 🚀 Key Features
 
-This application fulfills all criteria for the assignment, achieving the **Excellent Tier (10.0 / 10.0)**.
-
-### 🟢 Pass Tier (6.0 Points - Foundation)
-- [x] **Strict compiler setup (1.0 pt):** tsconfig uses `"strict": true`. Zero compile errors, zero warnings.
-- [x] **No "any" type for domain data (1.0 pt):** Complete modeling of the DummyJSON product payload in `src/types.ts`. All fetched endpoints return typed promises.
-- [x] **Asynchronous list rendering (1.5 pt):** Fetched data via asynchronous client modules and cleanly rendered onto a responsive catalogue grid.
-- [x] **Type annotations (1.0 pt):** Every function parameter, signature, and return value is explicitly annotated.
-- [x] **Robust error handling (1.0 pt):** Custom catch wrapper in `fetchJson` and specialized loading state handlers. Failures render a structured, retry-able Error View.
-- [x] **Product detail view (0.5 pt):** Interactive modal fetching product details by ID asynchronously and displaying full product metadata.
-
-### 🟡 Good Tier (8.0 Points - Intermediate)
-- [x] **HOF Catalog Transforms (0.6 pt):** Local search and multi-criteria filters (price limits, minimum ratings, category matching) and sorting are implemented using chained `filter()`, `map()`, and `reduce()` HOFs with no manual loop statements.
-- [x] **Generic `fetchJson<T>` Client (0.6 pt):** A type-safe network helper in `src/api.ts` validating HTTP responses and parsing structured generic payloads.
-- [x] **Promise.all Concurrent Loading (0.4 pt):** Loading products and categories concurrently in `initApp()` to minimize initialization latency.
-- [x] **AppState Union Model (0.4 pt):** State represented as a type union of `IdleState | LoadingState | SuccessState | ErrorState`.
-
-### 🔵 Excellent Tier (10.0 Points - Advanced)
-- [x] **Discriminated Union & Narrowing (0.5 pt):** The central state represents a discriminated union. Renders are mapped in `ui.ts` via compiler-enforced `assertNever` exhaustive narrowing.
-- [x] **Utility Types Application (0.4 pt):** Applied `Pick` (to define `ProductCardProps`), `Partial<Omit<...>>` (for product modifications payload), and `Record` (to handle saved favorites map `FavoritesMap`).
-- [x] **Generic Cache Class (0.4 pt):** Built a custom `DataCache<K extends string | number, V>` with TTL expiration tracking to cache product details and prevent duplicate API hits.
-- [x] **Functional Closures (Debounce & Memoize) (0.3 pt):**
-  - `debounce`: rate-limits keyboard typing search queries (300ms) inside `src/ui.ts` to prevent API query spamming.
-  - `memoize`: caches heavy calculations for the top-rated category products marquee banner inside `src/ui.ts` to prevent redundant map/reduce array executions on every redraw.
-- [x] **Clean Architecture & Validated Build (0.4 pt):** Fully modular codebase, separation of concerns, and clean production build verification.
+*   **SPA Architecture:** Smooth client-side transitions and modular single-page loading.
+*   **Asynchronous API Ingestion:** Concurrent queries (fetching products & categories) with `Promise.all` and native `fetch` handling.
+*   **Discriminated Union State:** Safe compile-time checked state management with exhaustive narrowing.
+*   **Type-Safe Local Cache:** Avoids repeated API hits for single product detail queries using a custom TTL-based `DataCache` class.
+*   **Chained HOF Catalog Transforms:** Dynamic search, pagination, category filtering, min/max price sliders, min ratings, and sorting calculated locally using chained ES6 higher-order functions.
+*   **Interactive Modal Details View:** Features pulsing skeleton loading blocks, multi-image slider navigation controls, keyboard accessibility, and a modal-favorite toggle button.
+*   **Top-Rated Products Marquee:** Custom auto-scrolling loop marquee displaying the highest-rated product for each category.
+*   **Custom Closures:** Rate-limited searching via `debounce` and optimized category calculations via cached computations with `memoize`.
 
 ---
 

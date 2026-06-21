@@ -64,6 +64,7 @@ export interface SuccessState {
   minPrice: number | null;
   maxPrice: number | null;
   minRating: number;
+  isDetailLoading: boolean;
 }
 
 export interface ErrorState {

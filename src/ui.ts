@@ -320,8 +320,10 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
     </footer>
 
     <!-- Detail Modal Wrapper -->
-    <div id="detail-modal" class="modal-overlay ${state.selectedProduct ? 'active' : ''}">
-      ${state.selectedProduct ? renderDetailModalContent(state.selectedProduct, relatedProducts, isFavoriteSelected) : ''}
+    <div id="detail-modal" class="modal-overlay ${state.selectedProduct || state.isDetailLoading ? 'active' : ''}">
+      ${state.isDetailLoading 
+        ? renderDetailSkeleton() 
+        : (state.selectedProduct ? renderDetailModalContent(state.selectedProduct, relatedProducts, isFavoriteSelected) : '')}
     </div>
   `;
 
@@ -401,6 +403,64 @@ function renderProductCard(props: ProductCardProps, isFavorite: boolean): string
 }
 
 /**
+ * Renders an animated pulse skeleton loader placeholder for the product detail modal.
+ */
+function renderDetailSkeleton(): string {
+  return `
+    <div class="modal-content">
+      <button id="modal-close-btn" class="modal-close-btn" aria-label="Close details">✕</button>
+      
+      <div class="product-detail-layout">
+        <!-- Gallery Skeleton -->
+        <div class="detail-gallery">
+          <div class="skeleton skeleton-image"></div>
+          <div class="detail-thumbs" style="margin-top: 1rem;">
+            <div class="skeleton" style="width: 60px; height: 60px; border-radius: var(--border-radius-sm); flex-shrink: 0;"></div>
+            <div class="skeleton" style="width: 60px; height: 60px; border-radius: var(--border-radius-sm); flex-shrink: 0;"></div>
+            <div class="skeleton" style="width: 60px; height: 60px; border-radius: var(--border-radius-sm); flex-shrink: 0;"></div>
+          </div>
+        </div>
+
+        <!-- Info Skeleton -->
+        <div class="detail-info">
+          <div>
+            <div class="skeleton skeleton-text short" style="margin-bottom: 0.75rem;"></div>
+            <div class="skeleton skeleton-title"></div>
+            
+            <div class="detail-rating-row" style="margin-bottom: 1.5rem;">
+              <div class="skeleton skeleton-text short" style="height: 1.5rem; width: 80px; border-radius: 6px;"></div>
+              <div class="skeleton skeleton-text medium" style="height: 1.2rem; width: 120px;"></div>
+            </div>
+
+            <div class="skeleton skeleton-text long"></div>
+            <div class="skeleton skeleton-text long"></div>
+            <div class="skeleton skeleton-text medium"></div>
+
+            <div class="detail-meta-specs" style="margin-top: 2rem;">
+              <div class="spec-item">
+                <div class="skeleton skeleton-text short"></div>
+                <div class="skeleton skeleton-text medium" style="margin-top: 0.25rem;"></div>
+              </div>
+              <div class="spec-item">
+                <div class="skeleton skeleton-text short"></div>
+                <div class="skeleton skeleton-text medium" style="margin-top: 0.25rem;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="detail-buy-row">
+            <div class="detail-price-block">
+              <div class="skeleton skeleton-text medium" style="height: 2rem; width: 120px;"></div>
+            </div>
+            <div class="skeleton" style="width: 130px; height: 42px; border-radius: var(--border-radius-sm);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
  * Renders detailed product view inside the modal.
  */
 function renderDetailModalContent(prod: any, relatedProducts: Product[], isFavorite: boolean): string {
@@ -413,7 +473,13 @@ function renderDetailModalContent(prod: any, relatedProducts: Product[], isFavor
       <div class="product-detail-layout">
         <!-- Gallery -->
         <div class="detail-gallery">
-          <img id="detail-main-image" class="detail-main-img" src="${prod.images[0] || prod.thumbnail}" alt="${prod.title}" />
+          <div class="gallery-wrapper">
+            ${prod.images.length > 1 ? `
+              <button class="gallery-nav-btn prev" aria-label="Previous image">&larr;</button>
+              <button class="gallery-nav-btn next" aria-label="Next image">&rarr;</button>
+            ` : ''}
+            <img id="detail-main-image" class="detail-main-img" src="${prod.images[0] || prod.thumbnail}" alt="${prod.title}" />
+          </div>
           ${prod.images.length > 1 ? `
             <div class="detail-thumbs">
               ${prod.images.map((img: string, idx: number) => `
@@ -709,21 +775,55 @@ function setupSuccessEventListeners(): void {
 
     // Gallery Thumbnail Swap Listener
     const thumbsContainer = detailModal.querySelector('.detail-thumbs');
+    const getThumbs = () => Array.from(detailModal.querySelectorAll('.detail-thumb-img')) as HTMLImageElement[];
+
+    const setActiveImageIndex = (idx: number, thumbs: HTMLImageElement[]) => {
+      if (idx < 0 || idx >= thumbs.length) return;
+      const targetThumb = thumbs[idx];
+      const newUrl = targetThumb.getAttribute('data-thumb-url');
+      const mainImg = document.getElementById('detail-main-image') as HTMLImageElement | null;
+      if (newUrl && mainImg) {
+        mainImg.src = newUrl;
+        thumbs.forEach(t => t.classList.remove('active'));
+        targetThumb.classList.add('active');
+        targetThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    };
+
     if (thumbsContainer) {
       thumbsContainer.addEventListener('click', (e) => {
         const thumb = (e.target as HTMLElement).closest('.detail-thumb-img');
         if (thumb) {
-          const newUrl = thumb.getAttribute('data-thumb-url');
-          const mainImg = document.getElementById('detail-main-image') as HTMLImageElement | null;
-          
-          if (newUrl && mainImg) {
-            mainImg.src = newUrl;
-
-            // Update active states
-            detailModal.querySelectorAll('.detail-thumb-img').forEach(t => t.classList.remove('active'));
-            thumb.classList.add('active');
+          const thumbs = getThumbs();
+          const targetIndex = thumbs.indexOf(thumb as HTMLImageElement);
+          if (targetIndex !== -1) {
+            setActiveImageIndex(targetIndex, thumbs);
           }
         }
+      });
+    }
+
+    // Gallery Next/Prev Slider Navigation Listener
+    const prevBtn = detailModal.querySelector('.gallery-nav-btn.prev');
+    const nextBtn = detailModal.querySelector('.gallery-nav-btn.next');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        const thumbs = getThumbs();
+        if (thumbs.length <= 1) return;
+        const currentIndex = thumbs.findIndex(t => t.classList.contains('active'));
+        const targetIndex = (currentIndex - 1 + thumbs.length) % thumbs.length;
+        setActiveImageIndex(targetIndex, thumbs);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const thumbs = getThumbs();
+        if (thumbs.length <= 1) return;
+        const currentIndex = thumbs.findIndex(t => t.classList.contains('active'));
+        const targetIndex = (currentIndex + 1) % thumbs.length;
+        setActiveImageIndex(targetIndex, thumbs);
       });
     }
 
@@ -770,3 +870,25 @@ function setupSuccessEventListeners(): void {
     });
   }
 }
+
+// Register global keydown handler for details modal navigation and close controls
+document.addEventListener('keydown', (e) => {
+  const detailModal = document.getElementById('detail-modal');
+  if (!detailModal || !detailModal.classList.contains('active')) return;
+
+  if (e.key === 'Escape') {
+    closeProductDetails();
+  } else if (e.key === 'ArrowRight') {
+    const nextBtn = detailModal.querySelector('.gallery-nav-btn.next') as HTMLButtonElement | null;
+    if (nextBtn) {
+      e.preventDefault();
+      nextBtn.click();
+    }
+  } else if (e.key === 'ArrowLeft') {
+    const prevBtn = detailModal.querySelector('.gallery-nav-btn.prev') as HTMLButtonElement | null;
+    if (prevBtn) {
+      e.preventDefault();
+      prevBtn.click();
+    }
+  }
+});

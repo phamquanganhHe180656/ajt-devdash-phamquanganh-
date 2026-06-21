@@ -83,7 +83,8 @@ export async function initApp(): Promise<void> {
       pageSize: 20,
       minPrice: null,
       maxPrice: null,
-      minRating: 0
+      minRating: 0,
+      isDetailLoading: false
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred';
@@ -204,9 +205,15 @@ export async function viewProductDetails(id: number): Promise<void> {
 
   if (cachedProduct) {
     appState.selectedProduct = cachedProduct;
+    appState.isDetailLoading = false;
     renderDashboard();
     return;
   }
+
+  // Instantly show details loading skeleton
+  appState.isDetailLoading = true;
+  appState.selectedProduct = null;
+  renderDashboard();
 
   try {
     // If not cached, load details from server asynchronously
@@ -216,11 +223,15 @@ export async function viewProductDetails(id: number): Promise<void> {
     // Check if the user hasn't closed it or moved state during fetch
     if (appState.status === 'success') {
       appState.selectedProduct = productDetail;
-      renderDashboard();
     }
   } catch (error) {
     console.error(`Failed to load details for product ID ${id}:`, error);
     alert('Could not retrieve product details. Please check your network connection.');
+  } finally {
+    if (appState.status === 'success') {
+      appState.isDetailLoading = false;
+      renderDashboard();
+    }
   }
 }
 
@@ -230,6 +241,7 @@ export async function viewProductDetails(id: number): Promise<void> {
 export function closeProductDetails(): void {
   if (appState.status !== 'success') return;
   appState.selectedProduct = null;
+  appState.isDetailLoading = false;
   renderDashboard();
 }
 

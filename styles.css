@@ -1008,3 +1008,97 @@ header.app-header {
   font-weight: 700;
   font-size: 0.75rem;
 }
+
+/* -------------------------------------------------------------
+ * Day 5 - Skeleton Loaders & Gallery Navigation Styles
+ * ------------------------------------------------------------- */
+
+/* Skeleton Loader placeholders */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-tertiary) 25%, #2a3754 50%, var(--bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: pulse-skeleton 1.5s infinite;
+  border-radius: var(--border-radius-sm);
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text.short {
+  width: 40%;
+}
+
+.skeleton-text.medium {
+  width: 70%;
+}
+
+.skeleton-text.long {
+  width: 90%;
+}
+
+.skeleton-title {
+  height: 2.25rem;
+  margin-bottom: 1.25rem;
+  width: 75%;
+}
+
+.skeleton-image {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: var(--border-radius-md);
+}
+
+@keyframes pulse-skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Gallery Wrapper and Slider Navigation Buttons */
+.gallery-wrapper {
+  position: relative;
+  width: 100%;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.gallery-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(19, 27, 46, 0.8);
+  border: 1px solid var(--border-glass);
+  color: var(--text-primary);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: var(--transition-fast);
+  font-size: 1.25rem;
+  user-select: none;
+}
+
+.gallery-nav-btn:hover {
+  background: var(--accent-secondary);
+  color: var(--bg-primary);
+  border-color: transparent;
+  box-shadow: var(--shadow-glow);
+}
+
+.gallery-nav-btn.prev {
+  left: 0.75rem;
+}
+
+.gallery-nav-btn.next {
+  right: 0.75rem;
+}
+

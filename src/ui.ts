@@ -1,6 +1,6 @@
 /**
  * -------------------------------------------------------------
- * DevDash - UI Rendering & Event Handling (Day 3 Implementation)
+ * DevDash - UI Rendering & Event Handling (Day 4.5 Implementation)
  * -------------------------------------------------------------
  */
 
@@ -14,7 +14,10 @@ import {
   toggleFavorite, 
   viewProductDetails, 
   closeProductDetails,
-  setCurrentPage
+  setCurrentPage,
+  setMinPrice,
+  setMaxPrice,
+  setMinRating
 } from './state';
 import { debounce } from './utils';
 
@@ -140,6 +143,10 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
     ? state.products.filter(p => p.category === state.selectedProduct!.category && p.id !== state.selectedProduct!.id).slice(0, 4)
     : [];
 
+  const isFavoriteSelected = state.selectedProduct 
+    ? !!state.favorites[state.selectedProduct.id] 
+    : false;
+
   // 5. Render core HTML layout
   container.innerHTML = `
     <!-- Header -->
@@ -192,9 +199,9 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
         </div>
       </section>
 
-      <!-- Controls Panel (Search & Filters) -->
+      <!-- Controls Panel (Search, Filters, Price Slider, Min Rating) -->
       <section class="controls-panel" aria-label="Search and Filter Controls">
-        <div class="search-wrapper">
+        <div class="search-wrapper" style="width: 100%">
           <span class="search-icon">🔍</span>
           <input 
             type="text" 
@@ -205,23 +212,79 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
           />
         </div>
         
-        <div class="filter-group">
-          <select id="category-filter" class="select-control">
-            <option value="all">All Categories</option>
-            ${state.categories.map(cat => `
-              <option value="${cat.slug}" ${state.selectedCategory === cat.slug ? 'selected' : ''}>
-                ${cat.name}
-              </option>
-            `).join('')}
-          </select>
+        <div class="filter-group" style="display: flex; gap: 0.75rem; flex-wrap: wrap; width: 100%; justify-content: flex-start; margin-top: 0.5rem; align-items: flex-end;">
+          <!-- Category select -->
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Category</label>
+            <select id="category-filter" class="select-control" style="min-width: 150px; padding: 0.5rem 2rem 0.5rem 0.75rem;">
+              <option value="all">All Categories</option>
+              ${state.categories.map(cat => `
+                <option value="${cat.slug}" ${state.selectedCategory === cat.slug ? 'selected' : ''}>
+                  ${cat.name}
+                </option>
+              `).join('')}
+            </select>
+          </div>
 
-          <select id="sort-filter" class="select-control">
-            <option value="" ${state.sortBy === '' ? 'selected' : ''}>No Sorting</option>
-            <option value="price-asc" ${state.sortBy === 'price-asc' ? 'selected' : ''}>Price: Low to High</option>
-            <option value="price-desc" ${state.sortBy === 'price-desc' ? 'selected' : ''}>Price: High to Low</option>
-            <option value="rating-desc" ${state.sortBy === 'rating-desc' ? 'selected' : ''}>Rating: High to Low</option>
-            <option value="title-asc" ${state.sortBy === 'title-asc' ? 'selected' : ''}>Name: A to Z</option>
-          </select>
+          <!-- Sort select -->
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Sort By</label>
+            <select id="sort-filter" class="select-control" style="min-width: 150px; padding: 0.5rem 2rem 0.5rem 0.75rem;">
+              <option value="" ${state.sortBy === '' ? 'selected' : ''}>No Sorting</option>
+              <option value="price-asc" ${state.sortBy === 'price-asc' ? 'selected' : ''}>Price: Low to High</option>
+              <option value="price-desc" ${state.sortBy === 'price-desc' ? 'selected' : ''}>Price: High to Low</option>
+              <option value="rating-desc" ${state.sortBy === 'rating-desc' ? 'selected' : ''}>Rating: High to Low</option>
+              <option value="title-asc" ${state.sortBy === 'title-asc' ? 'selected' : ''}>Name: A to Z</option>
+            </select>
+          </div>
+
+          <!-- Price Range Slider combined with Number Inputs -->
+          <div style="display: flex; flex-direction: column; gap: 0.25rem; min-width: 220px; background: var(--bg-tertiary); padding: 0.5rem 0.75rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-glass);">
+            <label id="price-slider-label" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">
+              Max Price: $${state.maxPrice !== null ? state.maxPrice : 2000}
+            </label>
+            <input 
+              type="range" 
+              id="price-range-slider" 
+              min="0" 
+              max="2000" 
+              value="${state.maxPrice !== null ? state.maxPrice : 2000}" 
+              style="accent-color: var(--accent-secondary); width: 100%; cursor: pointer; height: 6px; border-radius: 3px;"
+            />
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+              <input 
+                type="number" 
+                id="min-price-input" 
+                class="search-input" 
+                style="padding: 0.35rem 0.5rem; width: 75px; text-align: center; font-size: 0.8rem;" 
+                placeholder="Min" 
+                value="${state.minPrice !== null ? state.minPrice : ''}" 
+                min="0"
+              />
+              <span style="color: var(--text-muted); font-size: 0.75rem;">to</span>
+              <input 
+                type="number" 
+                id="max-price-input" 
+                class="search-input" 
+                style="padding: 0.35rem 0.5rem; width: 75px; text-align: center; font-size: 0.8rem;" 
+                placeholder="Max" 
+                value="${state.maxPrice !== null ? state.maxPrice : ''}" 
+                min="0"
+              />
+            </div>
+          </div>
+
+          <!-- Rating Select -->
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <label style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Min Rating</label>
+            <select id="rating-filter" class="select-control" style="min-width: 120px; padding: 0.5rem 2rem 0.5rem 0.75rem;">
+              <option value="0" ${state.minRating === 0 ? 'selected' : ''}>All Ratings</option>
+              <option value="4.5" ${state.minRating === 4.5 ? 'selected' : ''}>⭐ 4.5 & Up</option>
+              <option value="4.0" ${state.minRating === 4.0 ? 'selected' : ''}>⭐ 4.0 & Up</option>
+              <option value="3.5" ${state.minRating === 3.5 ? 'selected' : ''}>⭐ 3.5 & Up</option>
+              <option value="3.0" ${state.minRating === 3.0 ? 'selected' : ''}>⭐ 3.0 & Up</option>
+            </select>
+          </div>
         </div>
       </section>
 
@@ -241,7 +304,7 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
           : `
             <div class="state-container" style="grid-column: 1 / -1; min-height: 250px;">
               <h3 class="state-title">No matching products found</h3>
-              <p class="state-message">We couldn't find anything matching your search term "${state.searchTerm}". Try adjusting your keywords or category filters.</p>
+              <p class="state-message">We couldn't find anything matching your filter criteria. Try adjusting your search term, price range, or category filters.</p>
             </div>
           `
         }
@@ -258,7 +321,7 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
 
     <!-- Detail Modal Wrapper -->
     <div id="detail-modal" class="modal-overlay ${state.selectedProduct ? 'active' : ''}">
-      ${state.selectedProduct ? renderDetailModalContent(state.selectedProduct, relatedProducts) : ''}
+      ${state.selectedProduct ? renderDetailModalContent(state.selectedProduct, relatedProducts, isFavoriteSelected) : ''}
     </div>
   `;
 
@@ -340,7 +403,7 @@ function renderProductCard(props: ProductCardProps, isFavorite: boolean): string
 /**
  * Renders detailed product view inside the modal.
  */
-function renderDetailModalContent(prod: any, relatedProducts: Product[]): string {
+function renderDetailModalContent(prod: any, relatedProducts: Product[], isFavorite: boolean): string {
   const finalPrice = prod.price * (1 - prod.discountPercentage / 100);
 
   return `
@@ -369,7 +432,18 @@ function renderDetailModalContent(prod: any, relatedProducts: Product[]): string
         <div class="detail-info">
           <div>
             <span class="detail-category">${prod.category}</span>
-            <h2 class="detail-title">${prod.title}</h2>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; margin-bottom: 1rem;">
+              <h2 class="detail-title" style="margin-bottom: 0;">${prod.title}</h2>
+              <button 
+                id="modal-fav-btn" 
+                class="product-fav-btn ${isFavorite ? 'active' : ''}" 
+                data-fav-id="${prod.id}"
+                style="position: relative; top: 0; right: 0; flex-shrink: 0; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; border-radius: 50%;"
+                aria-label="Toggle favorite"
+              >
+                ❤️
+              </button>
+            </div>
             
             <div class="detail-rating-row">
               <span class="product-rating">⭐ ${prod.rating.toFixed(1)}</span>
@@ -528,6 +602,59 @@ function setupSuccessEventListeners(): void {
     });
   }
 
+  // Bi-directional Price Range Slider and Number inputs
+  const priceSlider = document.getElementById('price-range-slider') as HTMLInputElement | null;
+  const minPriceInput = document.getElementById('min-price-input') as HTMLInputElement | null;
+  const maxPriceInput = document.getElementById('max-price-input') as HTMLInputElement | null;
+  const priceLabel = document.getElementById('price-slider-label');
+
+  if (priceSlider && maxPriceInput) {
+    priceSlider.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const val = Number(target.value);
+      const limit = val >= 2000 ? null : val;
+      
+      // Update label and Max Price Input field
+      if (priceLabel) {
+        priceLabel.innerText = `Max Price: $${limit !== null ? limit : 2000}`;
+      }
+      maxPriceInput.value = limit !== null ? String(limit) : '';
+      setMaxPrice(limit);
+    });
+  }
+
+  if (maxPriceInput) {
+    maxPriceInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const val = target.value === '' ? null : Number(target.value);
+      
+      if (priceSlider) {
+        priceSlider.value = val !== null ? String(Math.min(val, 2000)) : '2000';
+      }
+      if (priceLabel) {
+        priceLabel.innerText = `Max Price: $${val !== null ? val : 2000}`;
+      }
+      setMaxPrice(val);
+    });
+  }
+
+  if (minPriceInput) {
+    minPriceInput.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      const val = target.value === '' ? null : Number(target.value);
+      setMinPrice(val);
+    });
+  }
+
+  // Rating Filter Selection Event
+  const ratingFilter = document.getElementById('rating-filter') as HTMLSelectElement | null;
+  if (ratingFilter) {
+    ratingFilter.addEventListener('change', (e) => {
+      const target = e.target as HTMLSelectElement;
+      setMinRating(Number(target.value));
+    });
+  }
+
   // 4. Product Catalog Card Clicks (Open Modal)
   const productCatalogue = document.getElementById('products-catalogue');
   if (productCatalogue) {
@@ -566,6 +693,17 @@ function setupSuccessEventListeners(): void {
     if (closeBtn) {
       closeBtn.addEventListener('click', () => {
         closeProductDetails();
+      });
+    }
+
+    // Modal Favorite Heart Button Binding
+    const modalFavBtn = document.getElementById('modal-fav-btn');
+    if (modalFavBtn) {
+      modalFavBtn.addEventListener('click', () => {
+        const favId = Number(modalFavBtn.getAttribute('data-fav-id'));
+        if (!isNaN(favId)) {
+          toggleFavorite(favId);
+        }
       });
     }
 

@@ -80,7 +80,10 @@ export async function initApp(): Promise<void> {
       sortBy: '',
       favorites,
       currentPage: 1,
-      pageSize: 20
+      pageSize: 20,
+      minPrice: null,
+      maxPrice: null,
+      minRating: 0
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown network error occurred';
@@ -98,22 +101,34 @@ export async function initApp(): Promise<void> {
 function filterAndSortProducts(): void {
   if (appState.status !== 'success') return;
 
-  const { products, searchTerm, selectedCategory, sortBy } = appState;
+  const { products, searchTerm, selectedCategory, sortBy, minPrice, maxPrice, minRating } = appState;
   
-  // 1. Filter by Search Term and Selected Category
-  let results = products.filter((product) => {
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    
-    const searchLower = searchTerm.toLowerCase().trim();
-    const matchesSearch = searchLower === '' || 
-      product.title.toLowerCase().includes(searchLower) ||
-      product.description.toLowerCase().includes(searchLower) ||
-      (product.brand && product.brand.toLowerCase().includes(searchLower));
+  // 1. Apply multi-criteria filtering using chained filter() HOFs (no manual loops)
+  let results = products
+    .filter((product) => {
+      // Filter by search keyword
+      const searchLower = searchTerm.toLowerCase().trim();
+      return searchLower === '' || 
+        product.title.toLowerCase().includes(searchLower) ||
+        product.description.toLowerCase().includes(searchLower) ||
+        (product.brand && product.brand.toLowerCase().includes(searchLower));
+    })
+    .filter((product) => {
+      // Filter by category
+      return selectedCategory === 'all' || product.category === selectedCategory;
+    })
+    .filter((product) => {
+      // Filter by price range
+      const matchMin = minPrice === null || product.price >= minPrice;
+      const matchMax = maxPrice === null || product.price <= maxPrice;
+      return matchMin && matchMax;
+    })
+    .filter((product) => {
+      // Filter by minimum rating
+      return product.rating >= minRating;
+    });
 
-    return matchesCategory && matchesSearch;
-  });
-
-  // 2. Sort results in place
+  // 2. Sort results in place using sort() HOF
   if (sortBy !== '') {
     results = [...results].sort((a, b) => {
       switch (sortBy) {
@@ -225,4 +240,31 @@ export function setCurrentPage(page: number): void {
   if (appState.status !== 'success') return;
   appState.currentPage = page;
   renderDashboard();
+}
+
+/**
+ * Updates minimum price filter value.
+ */
+export function setMinPrice(price: number | null): void {
+  if (appState.status !== 'success') return;
+  appState.minPrice = price;
+  filterAndSortProducts();
+}
+
+/**
+ * Updates maximum price filter value.
+ */
+export function setMaxPrice(price: number | null): void {
+  if (appState.status !== 'success') return;
+  appState.maxPrice = price;
+  filterAndSortProducts();
+}
+
+/**
+ * Updates minimum rating filter value.
+ */
+export function setMinRating(rating: number): void {
+  if (appState.status !== 'success') return;
+  appState.minRating = rating;
+  filterAndSortProducts();
 }

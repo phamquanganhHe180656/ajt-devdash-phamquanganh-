@@ -61,6 +61,9 @@ export interface SuccessState {
   favorites: FavoritesMap;
   currentPage: number;
   pageSize: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  minRating: number;
 }
 
 export interface ErrorState {

@@ -4,7 +4,7 @@
  * -------------------------------------------------------------
  */
 
-import type { SuccessState, ProductCardProps, Product } from './types';
+import type { SuccessState, ProductCardProps, Product, Category } from './types';
 import { 
   appState, 
   initApp, 
@@ -19,12 +19,21 @@ import {
   setMaxPrice,
   setMinRating
 } from './state';
-import { debounce } from './utils';
+import { debounce, memoize } from './utils';
 
 // Single debounced wrapper instance for catalog search (Excellent tier closure requirement)
 const debouncedSearch = debounce((term: string) => {
   setSearchTerm(term);
 }, 300);
+
+// Memoized calculation helper for top-rated category products (Excellent tier closure requirement)
+const getTopRatedCategoryProducts = memoize((products: Product[], categories: Category[]): Product[] => {
+  return categories.map(cat => {
+    const catProducts = products.filter(p => p.category === cat.slug);
+    if (catProducts.length === 0) return null;
+    return catProducts.reduce((top, p) => (p.rating > top.rating ? p : top), catProducts[0]);
+  }).filter((p): p is Product => p !== null);
+});
 
 /**
  * Asserts compile-time completeness for discriminated union branches.
@@ -131,12 +140,8 @@ function renderSuccessDashboard(container: HTMLDivElement, state: SuccessState):
   const endIndex = Math.min(startIndex + state.pageSize, filteredCount);
   const pagedProducts = state.filteredProducts.slice(startIndex, endIndex);
 
-  // 3. Dynamic Calculation: Top-Rated product of each Category for Banner
-  const topCategoryProducts: Product[] = state.categories.map(cat => {
-    const catProducts = state.products.filter(p => p.category === cat.slug);
-    if (catProducts.length === 0) return null;
-    return catProducts.reduce((top, p) => (p.rating > top.rating ? p : top), catProducts[0]);
-  }).filter((p): p is Product => p !== null);
+  // 3. Dynamic Calculation: Top-Rated product of each Category for Banner (Memoized calculation HOF)
+  const topCategoryProducts = getTopRatedCategoryProducts(state.products, state.categories);
 
   // 4. Dynamic Calculation: Related Products for the Detail Modal (same category, up to 4 items)
   const relatedProducts = state.selectedProduct 

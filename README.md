@@ -34,16 +34,38 @@ ajt-devdash-phamquanganh/
 
 ---
 
-## 🚀 Key Features
+## 🚀 Completed Features Checklist (Pass / Good / Excellent Tiers)
 
-*   **SPA Architecture:** Smooth client-side transitions and modular single-page loading.
-*   **Asynchronous API Ingestion:** Concurrent queries (fetching products & categories) with `Promise.all` and native `fetch` handling.
-*   **Discriminated Union State:** Safe compile-time checked state management with exhaustive narrowing.
-*   **Type-Safe Local Cache:** Avoids repeated API hits for single product detail queries using a custom TTL-based `DataCache` class.
-*   **Chained HOF Catalog Transforms:** Dynamic search, pagination, category filtering, min/max price sliders, min ratings, and sorting calculated locally using chained ES6 higher-order functions.
-*   **Interactive Modal Details View:** Features pulsing skeleton loading blocks, multi-image slider navigation controls, keyboard accessibility, and a modal-favorite toggle button.
-*   **Top-Rated Products Marquee:** Custom auto-scrolling loop marquee displaying the highest-rated product for each category.
-*   **Custom Closures:** Rate-limited searching via `debounce` and optimized category calculations via cached computations with `memoize`.
+Below is the implementation status of completed features, grouped by evaluation tiers:
+
+### 🟢 Pass Tier (Foundation)
+- [x] **Strict Compiler Environment:** Configured with `"strict": true` in `tsconfig.json` with zero type errors.
+- [x] **Domain Data Modeling:** All domain data structures (Products, Categories) are fully modeled with TypeScript interfaces. No `any` type is used.
+- [x] **Asynchronous Ingestion:** Clean asynchronous retrieval of JSON resources using `async/await` and Fetch API.
+- [x] **Explicit Type Annotations:** All functions, methods, parameters, and return types are strictly annotated.
+- [x] **Robust Error Handling:** Implemented robust `try/catch` handlers with clean Error view rendering and a retry button.
+- [x] **Details View:** Interactive product detail view modal that retrieves detailed metadata by product ID.
+
+### 🟡 Good Tier (Intermediate)
+- [x] **Higher-Order Functions:** Search, category matching, rating filtering, and range price filters are implemented using chained `filter()`, `map()`, and `reduce()` HOFs.
+- [x] **Generic Fetch Client:** Built a reusable, type-safe `fetchJson<T>` network wrapper to fetch API resources.
+- [x] **Parallel Asset Loading:** Utilized `Promise.all` in the application initialization to concurrently load products catalog and categories.
+- [x] **State Union Model:** Application state is mapped via a type union (`IdleState | LoadingState | SuccessState | ErrorState`) representing execution flows.
+
+### 🔵 Excellent Tier (Advanced)
+- [x] **Discriminated Union & Narrowing:** Enforced compile-time exhaustive narrowing for all states using the `assertNever` helper.
+- [x] **TypeScript Utility Types:** Practical application of `Pick` (for card previews), `Partial<Omit<...>>` (for product modifications), and `Record` (for storing favorites).
+- [x] **Generic Local Cache:** Built a custom `DataCache<K extends string | number, V>` with TTL expiration support to cache product details.
+- [x] **Functional Closures:**
+  - `debounce`: rate-limits search query keyboard inputs to optimize client-side rendering.
+  - `memoize`: caches heavy mapping/reduction operations for the category marquee banner.
+- [x] **Premium Interactive Features:**
+  - **Bi-directional Price range sync:** Dynamic synchronization between price sliders and number input boxes.
+  - **Detail Modal Skeleton Loader:** instant modal open with grey animated pulsing loaders during API fetching.
+  - **Image Gallery Slider:** floating navigation arrows (`Prev`/`Next`) to browse product images inside the modal.
+  - **Keyboard controls:** escape key to close details modal, left/right arrow keys to navigate image gallery pages.
+- [x] **Clean Modular Architecture & Build Validation:** Separation of concerns across types, API modules, state handlers, and rendering systems. The production build compiles cleanly.
+
 
 ---
 

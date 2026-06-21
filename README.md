@@ -1,5 +1,7 @@
 # DevDash - Premium Typed Async Single Page Dashboard
 
+🔗 **Live Demo:** [https://phamquanganhhe180656.github.io/ajt-devdash-phamquanganh-/](https://phamquanganhhe180656.github.io/ajt-devdash-phamquanganh-/)
+
 **DevDash** is a modern, high-performance, and type-safe Single Page Application (SPA) dashboard built using vanilla HTML5, CSS3, TypeScript, and Vite. It asynchronously loads, caches, searches, filters, and manages products fetched from the DummyJSON API.
 
 The project is structured under strict compile-time constraints (`"strict": true`) and designed with a dark midnight ocean aesthetic, featuring glassmorphism elements, marquee scroll banners, and micro-interactions.

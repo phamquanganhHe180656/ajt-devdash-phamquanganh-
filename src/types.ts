@@ -59,6 +59,8 @@ export interface SuccessState {
   selectedCategory: string; // 'all' or category slug
   sortBy: 'price-asc' | 'price-desc' | 'rating-desc' | 'title-asc' | '';
   favorites: FavoritesMap;
+  currentPage: number;
+  pageSize: number;
 }
 
 export interface ErrorState {

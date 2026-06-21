@@ -118,3 +118,6 @@ The production bundle can be easily hosted on static providers:
 1. **Netlify:** Point build command to `npm run build` and publish directory to `dist`.
 2. **Vercel:** Auto-detects Vite configuration. Builds and hosts instantly.
 3. **GitHub Pages:** Deploy the compiled `dist/` folder via actions or git subtree.
+
+<!-- Rebuild trigger -->
+
